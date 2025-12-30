@@ -1,6 +1,6 @@
 <?php
-require_once "../session.php";
-require_once "../config.php";
+require_once "../../session.php";
+require_once "../../config.php";
 
 if ($_SESSION["role"] !== "admin") {
     header("Location: ../../index.php");
