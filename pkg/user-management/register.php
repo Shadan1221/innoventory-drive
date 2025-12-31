@@ -4,10 +4,15 @@ require_once "../../config.php"; // Go up two levels to find config
 $msg = "";
 $error = "";
 
+// Get role from URL parameter (admin signup) or default to 'user' (access request)
+$role = isset($_GET['role']) && $_GET['role'] === 'admin' ? 'admin' : 'user';
+$isAdminSignup = $role === 'admin';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = trim($_POST["name"]);
     $email = trim($_POST["email"]);
     $password = trim($_POST["password"]);
+    $role = trim($_POST["role"]); // Get role from hidden field
     
     // Check if email exists
     $check = $db->prepare("SELECT id FROM users WHERE email=?");
@@ -17,9 +22,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($check->num_rows > 0) {
         $error = "Email already exists.";
+    } elseif (strlen($password) < 6) {
+        $error = "Password must be at least 6 characters long.";
     } else {
-        // Force Role to 'user' and Status to 'pending'
-        $role = 'user';
+        // Both admin and user requests start as 'pending'
         $status = 'pending';
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
@@ -27,7 +33,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("sssss", $name, $email, $hashed_password, $role, $status);
 
         if ($stmt->execute()) {
-            $msg = "Request submitted successfully! Please wait for Admin approval.";
+            if ($role === 'admin') {
+                $msg = "Admin registration request submitted! Please wait for approval from an existing admin.";
+            } else {
+                $msg = "Request submitted successfully! Please wait for Admin approval.";
+            }
         } else {
             $error = "Error submitting request.";
         }
@@ -138,11 +148,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="card">
-        <h3>Request Access</h3>
+        <h3><?php echo $isAdminSignup ? 'Admin Registration' : 'Request Access'; ?></h3>
         <?php if($msg) echo "<div class='success'>$msg</div>"; ?>
         <?php if($error) echo "<div class='error'>$error</div>"; ?>
         
+        <?php if ($isAdminSignup): ?>
+            <div style="background: #fef3c7; color: #92400e; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px;">
+                <strong>Note:</strong> Admin registration requires approval from an existing administrator.
+            </div>
+        <?php else: ?>
+            <div style="background: #dbeafe; color: #1e40af; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px;">
+                Submit a request for access. An administrator will review and approve your request.
+            </div>
+        <?php endif; ?>
+        
         <form method="POST">
+            <input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>">
             <div class="form-group">
                 <label for="name">Full Name</label>
                 <input type="text" id="name" name="name" placeholder="Full Name" required autocomplete="name">
@@ -155,7 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="password">Create Password</label>
                 <input type="password" id="password" name="password" placeholder="Create Password" required autocomplete="new-password" minlength="6">
             </div>
-            <button type="submit">Submit Request</button>
+            <button type="submit"><?php echo $isAdminSignup ? 'Submit Admin Request' : 'Submit Request'; ?></button>
         </form>
         <a href="../../index.php" class="back-link">Back to Login</a>
     </div>

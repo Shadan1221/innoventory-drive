@@ -1,6 +1,6 @@
 <?php
-require_once "../session.php";
-require_once "../config.php";
+require_once "../../session.php";
+require_once "../../config.php";
 
 if ($_SESSION["role"] !== "admin") {
     header("Location: ../../index.php");
@@ -114,12 +114,53 @@ $result = mysqli_query($db, "SELECT * FROM users WHERE status='pending' ORDER BY
             padding: 40px;
             color: #6b7280;
         }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .header-left h1 {
+            margin: 0;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .btn-logout {
+            padding: 8px 16px;
+            background: #d13212;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover {
+            background: #b0280f;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <h1>Admin Dashboard</h1>
-        <p class="subtitle">Review and manage access requests</p>
+        <div class="header-section">
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+                <p class="subtitle">Review and manage access requests</p>
+            </div>
+            <div class="header-right">
+                <span class="user-info">Welcome, <?= htmlspecialchars($_SESSION["name"] ?? "Admin"); ?></span>
+                <a href="logout.php" class="btn-logout">Logout</a>
+            </div>
+        </div>
 
         <?php if (isset($_GET["msg"])): ?>
             <div class="message <?php echo strpos($_GET["msg"], "Error") !== false ? "error" : "success"; ?>">
